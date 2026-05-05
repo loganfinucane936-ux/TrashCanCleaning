@@ -30,6 +30,13 @@
       color: #2e7d32;
     }
 
+    .box {
+      background: #f1f1f1;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+
     input, textarea {
       width: 95%;
       padding: 8px;
@@ -51,6 +58,14 @@
       background: #45a049;
     }
 
+    footer {
+      text-align: center;
+      padding: 15px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    /* Popup */
     #popup {
       display: none;
       position: fixed;
@@ -80,8 +95,37 @@
 
 <header>
   <h1>🗑️ Trash Can Cleaning Service</h1>
-  <p>$15 per can | 2 cans for $25</p>
+  <p>We clean, sanitize, and deodorize your trash cans</p>
 </header>
+
+<section>
+  <h2>About Us</h2>
+  <p>
+    We provide professional trash can cleaning to keep your bins fresh,
+    clean, and free of bacteria and bad smells.
+  </p>
+</section>
+
+<section>
+  <h2>Services</h2>
+  <ul>
+    <li>Deep cleaning and sanitizing</li>
+    <li>Odor removal</li>
+    <li>One-time or scheduled service</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Pricing</h2>
+
+  <div class="box">
+    <p><b>$15 per can</b></p>
+  </div>
+
+  <div class="box">
+    <p><b>2 cans for $25</b></p>
+  </div>
+</section>
 
 <section>
   <h2>Book a Cleaning</h2>
@@ -95,6 +139,10 @@
   <button class="button" onclick="generate()">Book Now</button>
 </section>
 
+<footer>
+  © 2026 Trash Can Cleaning Service
+</footer>
+
 <!-- POPUP -->
 <div id="popup">
   <div class="popup-content">
@@ -102,13 +150,11 @@
 
     <textarea id="output" readonly></textarea>
 
-    <br>
     <button class="button" onclick="copyText()">Copy</button>
     <button class="button" onclick="closePopup()">Close</button>
 
     <p style="font-size:12px;">
-      Paste this into an email to: <br>
-      <b>loganfinucane936@gmail.com</b>
+      Send this to: <b>loganfinucane936@gmail.com</b>
     </p>
   </div>
 </div>
@@ -137,7 +183,6 @@ Notes: ${notes}`;
   function copyText() {
     let text = document.getElementById("output");
     text.select();
-    text.setSelectionRange(0, 99999);
     document.execCommand("copy");
     alert("Copied to clipboard!");
   }
