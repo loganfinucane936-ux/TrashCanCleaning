@@ -30,17 +30,10 @@
       color: #2e7d32;
     }
 
-    .price {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-
-    .box {
-      background: #f1f1f1;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
+    input, textarea {
+      width: 95%;
+      padding: 8px;
+      margin: 5px 0;
     }
 
     .button {
@@ -48,8 +41,9 @@
       padding: 10px 15px;
       background: #4CAF50;
       color: white;
-      text-decoration: none;
+      border: none;
       border-radius: 6px;
+      cursor: pointer;
       margin-top: 10px;
     }
 
@@ -57,11 +51,27 @@
       background: #45a049;
     }
 
-    footer {
+    #popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+    }
+
+    .popup-content {
+      background: white;
+      width: 320px;
+      margin: 120px auto;
+      padding: 20px;
+      border-radius: 10px;
       text-align: center;
-      padding: 15px;
-      margin-top: 20px;
-      font-size: 14px;
+    }
+
+    textarea#output {
+      height: 140px;
     }
   </style>
 </head>
@@ -70,52 +80,72 @@
 
 <header>
   <h1>🗑️ Trash Can Cleaning Service</h1>
-  <p>We clean, sanitize, and deodorize your trash cans</p>
+  <p>$15 per can | 2 cans for $25</p>
 </header>
 
 <section>
-  <h2>About Us</h2>
-  <p>
-    We provide professional trash can cleaning to keep your bins fresh,
-    clean, and free of bacteria and bad smells.
-  </p>
+  <h2>Book a Cleaning</h2>
+
+  <input id="name" placeholder="Your Name">
+  <input id="address" placeholder="Your Address">
+  <input id="cans" placeholder="Number of Cans">
+  <input id="date" type="date">
+  <textarea id="notes" placeholder="Extra notes (optional)"></textarea>
+
+  <button class="button" onclick="generate()">Book Now</button>
 </section>
 
-<section>
-  <h2>Our Services</h2>
-  <ul>
-    <li>Deep cleaning and sanitizing</li>
-    <li>Odor removal</li>
-    <li>Monthly or one-time service</li>
-  </ul>
-</section>
+<!-- POPUP -->
+<div id="popup">
+  <div class="popup-content">
+    <h3>Your Booking Message</h3>
 
-<section>
-  <h2>Pricing</h2>
+    <textarea id="output" readonly></textarea>
 
-  <div class="box">
-    <p class="price">$15 per can</p>
+    <br>
+    <button class="button" onclick="copyText()">Copy</button>
+    <button class="button" onclick="closePopup()">Close</button>
+
+    <p style="font-size:12px;">
+      Paste this into an email to: <br>
+      <b>loganfinucane936@gmail.com</b>
+    </p>
   </div>
+</div>
 
-  <div class="box">
-    <p class="price">2 cans for $25</p>
-  </div>
-</section>
+<script>
+  function generate() {
+    let name = document.getElementById("name").value;
+    let address = document.getElementById("address").value;
+    let cans = document.getElementById("cans").value;
+    let date = document.getElementById("date").value;
+    let notes = document.getElementById("notes").value;
 
-<section>
-  <h2>Contact</h2>
-  <p>
-    📧 Email: (Your Email Here)
-  </p>
+    let message =
+`New Trash Can Cleaning Booking
 
-  <a class="button" href="mailto:youremail@example.com">
-    Book Now
-  </a>
-</section>
+Name: ${name}
+Address: ${address}
+Number of Cans: ${cans}
+Preferred Date: ${date}
+Notes: ${notes}`;
 
-<footer>
-  © 2026 Trash Can Cleaning Service
-</footer>
+    document.getElementById("output").value = message;
+    document.getElementById("popup").style.display = "block";
+  }
+
+  function copyText() {
+    let text = document.getElementById("output");
+    text.select();
+    text.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Copied to clipboard!");
+  }
+
+  function closePopup() {
+    document.getElementById("popup").style.display = "none";
+  }
+</script>
 
 </body>
 </html>
