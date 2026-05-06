@@ -1,84 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trash Can Cleaning Service</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial;
       margin: 0;
+      font-family: Arial, sans-serif;
       background: #f4f4f4;
+      color: #222;
     }
 
     header {
       background: #2e7d32;
       color: white;
-      padding: 20px;
       text-align: center;
+      padding: 30px 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 38px;
+    }
+
+    header p {
+      margin-top: 10px;
+      font-size: 18px;
     }
 
     section {
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
+      max-width: 850px;
+      margin: 20px auto;
       background: white;
-      margin-top: 20px;
-      border-radius: 10px;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     h2 {
       color: #2e7d32;
+      margin-top: 0;
     }
 
-    .box {
+    .pricing-box {
       background: #f1f1f1;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 20px;
+      font-weight: bold;
     }
 
-    input, textarea {
-      width: 95%;
-      padding: 8px;
-      margin: 5px 0;
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #d0d0d0;
+      border-radius: 10px;
+      font-size: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: white;
+      color: black;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #2e7d32;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
     }
 
     .button {
-      display: inline-block;
-      padding: 10px 15px;
-      background: #4CAF50;
+      background: #2e7d32;
       color: white;
       border: none;
-      border-radius: 6px;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 18px;
       cursor: pointer;
-      margin-top: 10px;
+      transition: 0.2s;
     }
 
     .button:hover {
-      background: #45a049;
+      background: #256628;
     }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* Popup */
 
     #popup {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      padding: 20px;
     }
 
-    .popup-content {
+    .popup-box {
       background: white;
-      width: 320px;
-      margin: 120px auto;
-      padding: 20px;
-      border-radius: 10px;
+      max-width: 450px;
+      margin: 60px auto;
+      padding: 25px;
+      border-radius: 16px;
       text-align: center;
     }
 
-    textarea#output {
-      height: 160px;
+    #output {
+      width: 100%;
+      min-height: 180px;
+      margin-top: 15px;
+    }
+
+    .small-text {
+      font-size: 13px;
+      color: #555;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 30px;
+      }
+
+      section {
+        margin: 15px;
+      }
     }
   </style>
 </head>
@@ -86,65 +158,127 @@
 <body>
 
 <header>
-  <h1>🗑️ Trash Can Cleaning Service</h1>
+  <h1>🗑️ Trash Can Cleaning</h1>
   <p>We clean, sanitize, and deodorize your trash cans</p>
 </header>
 
 <section>
   <h2>About Us</h2>
+
   <p>
     We provide professional trash can cleaning to keep your bins fresh,
-    clean, and free of bacteria and bad smells. Fast, reliable, and affordable service.
+    sanitary, and odor-free. Fast, affordable, and reliable service.
   </p>
 </section>
 
 <section>
   <h2>Pricing</h2>
 
-  <div class="box">
-    <p><b>$15 per can</b></p>
+  <div class="pricing-box">
+    $15 per can
   </div>
 
-  <div class="box">
-    <p><b>2 cans for $25</b></p>
+  <div class="pricing-box">
+    2 cans for $25
   </div>
 </section>
 
 <section>
   <h2>Book a Cleaning</h2>
 
-  <input id="name" placeholder="Your Name">
-  <input id="address" placeholder="Your Address">
-  <input id="cans" placeholder="Number of Cans">
-  <input id="date" type="date">
-  <input id="time" type="time">
-  <textarea id="notes" placeholder="Extra notes (optional)"></textarea>
+  <p>
+    Fill out this form and copy the booking message to send.
+  </p>
 
-  <button class="button" onclick="generate()">Book Now</button>
+  <form onsubmit="generateBooking(event)">
+
+    <input
+      id="name"
+      type="text"
+      placeholder="Your Name"
+      required
+    >
+
+    <input
+      id="address"
+      type="text"
+      placeholder="Your Address"
+      required
+    >
+
+    <input
+      id="cans"
+      type="number"
+      min="1"
+      placeholder="Number of Cans"
+      required
+    >
+
+    <label>Preferred Date</label>
+
+    <input
+      id="date"
+      type="date"
+      required
+    >
+
+    <label>Preferred Time</label>
+
+    <input
+      id="time"
+      type="time"
+      required
+    >
+
+    <textarea
+      id="notes"
+      placeholder="Extra Notes (optional)"
+    ></textarea>
+
+    <button class="button" type="submit">
+      Book Now
+    </button>
+
+  </form>
 </section>
 
 <footer>
   © 2026 Trash Can Cleaning Service
 </footer>
 
-<!-- POPUP -->
+<!-- Popup -->
+
 <div id="popup">
-  <div class="popup-content">
-    <h3>Your Booking Message</h3>
+
+  <div class="popup-box">
+
+    <h2>Your Booking Message</h2>
 
     <textarea id="output" readonly></textarea>
 
-    <button class="button" onclick="copyText()">Copy</button>
-    <button class="button" onclick="closePopup()">Close</button>
+    <button class="button" onclick="copyBooking()">
+      Copy Message
+    </button>
 
-    <p style="font-size:12px;">
-      Send this to: <b>loganfinucane936@gmail.com</b>
-    </p>
+    <br><br>
+
+    <button class="button" onclick="closePopup()">
+      Close
+    </button>
+
+    <div class="small-text">
+      Send to:<br>
+      <b>loganfinucane936@gmail.com</b>
+    </div>
+
   </div>
+
 </div>
 
 <script>
-  function generate() {
+  function generateBooking(event) {
+    event.preventDefault();
+
     let name = document.getElementById("name").value;
     let address = document.getElementById("address").value;
     let cans = document.getElementById("cans").value;
@@ -153,24 +287,34 @@
     let notes = document.getElementById("notes").value;
 
     let message =
-`New Trash Can Cleaning Booking
+`NEW TRASH CAN CLEANING BOOKING
 
 Name: ${name}
+
 Address: ${address}
+
 Number of Cans: ${cans}
+
 Preferred Date: ${date}
+
 Preferred Time: ${time}
-Notes: ${notes}`;
+
+Extra Notes: ${notes}`;
 
     document.getElementById("output").value = message;
+
     document.getElementById("popup").style.display = "block";
   }
 
-  function copyText() {
-    let text = document.getElementById("output");
-    text.select();
-    document.execCommand("copy");
-    alert("Copied to clipboard!");
+  function copyBooking() {
+    let output = document.getElementById("output");
+
+    output.select();
+    output.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(output.value);
+
+    alert("Booking copied!");
   }
 
   function closePopup() {
