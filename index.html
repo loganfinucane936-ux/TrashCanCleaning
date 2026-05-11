@@ -1,308 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Trash Can Cleaning Service</title>
+<title>Trash Can Cleaning Service</title>
 
-  <style>
+<style>
 
-    *{
-      box-sizing:border-box;
-    }
+*{
+  box-sizing:border-box;
+}
 
-    body{
-      margin:0;
-      font-family:Arial, sans-serif;
-      background:#f4f4f4;
-      color:#222;
-    }
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f4f4f4;
+  color:#222;
+}
 
-    header{
-      background:#2e7d32;
-      color:white;
-      text-align:center;
-      padding:40px 20px;
-    }
+header{
+  background:#2e7d32;
+  color:white;
+  text-align:center;
+  padding:40px 20px;
+}
 
-    header h1{
-      margin:0;
-      font-size:40px;
-    }
+header h1{
+  margin:0;
+  font-size:38px;
+}
 
-    header p{
-      margin-top:10px;
-      font-size:18px;
-    }
+header p{
+  margin-top:10px;
+  font-size:18px;
+}
 
-    section{
-      max-width:850px;
-      margin:20px auto;
-      background:white;
-      padding:25px;
-      border-radius:16px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    }
+section{
+  max-width:850px;
+  margin:20px auto;
+  background:white;
+  padding:25px;
+  border-radius:16px;
+}
 
-    h2{
-      color:#2e7d32;
-      margin-top:0;
-    }
+h2{
+  color:#2e7d32;
+  margin-top:0;
+}
 
-    .pricing-box{
-      background:#f1f1f1;
-      padding:18px;
-      border-radius:12px;
-      margin-bottom:12px;
-      font-size:22px;
-      font-weight:bold;
-    }
+.pricing-box{
+  background:#f1f1f1;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:10px;
+  font-size:20px;
+  font-weight:bold;
+}
 
-    .calendar-note{
-      background:#e8f5e9;
-      color:#1b5e20;
-      padding:15px;
-      border-radius:12px;
-      font-weight:bold;
-      margin-bottom:20px;
-    }
+.about{
+  line-height:1.6;
+}
 
-    form{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
+.note{
+  background:#e8f5e9;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+  margin-bottom:15px;
+}
 
-    input,
-    textarea{
-      width:100%;
-      padding:14px;
-      border:2px solid #d0d0d0;
-      border-radius:12px;
-      font-size:16px;
-    }
+form{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
-    input:focus,
-    textarea:focus{
-      outline:none;
-      border-color:#2e7d32;
-    }
+input, textarea{
+  padding:14px;
+  border-radius:10px;
+  border:2px solid #ddd;
+  font-size:16px;
+}
 
-    textarea{
-      min-height:120px;
-      resize:vertical;
-    }
+input:focus, textarea:focus{
+  border-color:#2e7d32;
+  outline:none;
+}
 
-    .button{
-      background:#2e7d32;
-      color:white;
-      border:none;
-      padding:15px;
-      border-radius:12px;
-      font-size:18px;
-      cursor:pointer;
-      transition:0.2s;
-    }
+button{
+  background:#2e7d32;
+  color:white;
+  padding:15px;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
+  cursor:pointer;
+}
 
-    .button:hover{
-      background:#256628;
-    }
+button:hover{
+  background:#256628;
+}
 
-    footer{
-      text-align:center;
-      padding:20px;
-      color:#666;
-      font-size:14px;
-    }
+#completeScreen{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#2e7d32;
+  color:white;
+  text-align:center;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  font-size:26px;
+  z-index:9999;
+}
 
-    .success-message{
-      display:none;
-      background:#d7ffd9;
-      color:#17611d;
-      padding:15px;
-      border-radius:12px;
-      margin-top:15px;
-      font-weight:bold;
-      text-align:center;
-    }
+#completeScreen button{
+  margin-top:20px;
+  background:white;
+  color:#2e7d32;
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
 
-    @media(max-width:600px){
+footer{
+  text-align:center;
+  padding:20px;
+  color:#666;
+  font-size:14px;
+}
 
-      header h1{
-        font-size:32px;
-      }
-
-      section{
-        margin:15px;
-      }
-
-    }
-
-  </style>
+</style>
 </head>
 
 <body>
 
 <header>
-
   <h1>🗑️ Trash Can Cleaning</h1>
-
-  <p>
-    We clean, sanitize, and deodorize your trash cans
-  </p>
-
+  <p>Fast • Clean • Affordable</p>
 </header>
 
 <section>
 
-  <h2>About Us</h2>
+<h2>About Me</h2>
 
-  <p>
-    Professional trash can cleaning to keep your bins fresh,
-    sanitary, and odor-free.
-  </p>
-
-</section>
-
-<section>
-
-  <h2>Pricing</h2>
-
-  <div class="pricing-box">
-    $15 Per Can
-  </div>
-
-  <div class="pricing-box">
-    2 Cans For $25
-  </div>
+<p class="about">
+Professional trash can cleaning service that removes odor, bacteria, and grime using high-pressure washing and sanitizing.
+</p>
 
 </section>
 
 <section>
 
-  <h2>Book A Cleaning</h2>
+<h2>Pricing</h2>
 
-  <div class="calendar-note">
-    📅 Bookings are ONLY available on Wednesdays
-  </div>
+<div class="pricing-box">$15 per can</div>
+<div class="pricing-box">2 cans for $25</div>
 
-  <form
-    id="bookingForm"
-    action="https://formspree.io/f/xpqbkvlr"
-    method="POST"
-  >
+</section>
 
-    <input
-      type="text"
-      name="name"
-      placeholder="Your Name"
-      required
-    >
+<section>
 
-    <input
-      type="text"
-      name="address"
-      placeholder="Your Address"
-      required
-    >
+<h2>Book a Cleaning</h2>
 
-    <input
-      type="number"
-      name="cans"
-      min="1"
-      placeholder="Number Of Cans"
-      required
-    >
+<div class="note">
+📅 ONLY Wednesdays are available
+</div>
 
-    <label>Select A Wednesday</label>
+<form id="form"
+action="https://formspree.io/f/xpqbkvlr"
+method="POST">
 
-    <input
-      type="date"
-      name="date"
-      id="date"
-      required
-    >
+<input name="name" placeholder="Your Name" required>
+<input name="address" placeholder="Your Address" required>
+<input name="cans" type="number" placeholder="Number of Cans" required>
 
-    <label>Preferred Time</label>
+<input id="date" name="date" type="date" required>
 
-    <input
-      type="time"
-      name="time"
-      required
-    >
+<input name="time" type="time" required>
 
-    <textarea
-      name="notes"
-      placeholder="Extra Notes (Optional)"
-    ></textarea>
+<textarea name="notes" placeholder="Extra Notes (optional)"></textarea>
 
-    <button class="button" type="submit">
-      Book Now
-    </button>
+<button type="submit">Book Now</button>
 
-  </form>
-
-  <div class="success-message" id="successMessage">
-    ✅ Booking Submitted Successfully!
-  </div>
+</form>
 
 </section>
 
 <footer>
-  © 2026 Trash Can Cleaning Service
+© 2026 Trash Can Cleaning Service
 </footer>
+
+<!-- COMPLETION SCREEN -->
+<div id="completeScreen">
+
+  <div>
+    ✅ Booking Complete!
+    <br><br>
+    Can’t wait to see you!
+  </div>
+
+  <button onclick="closeScreen()">Done</button>
+
+</div>
 
 <script>
 
-const form = document.getElementById("bookingForm");
+const form = document.getElementById("form");
+const dateInput = document.getElementById("date");
+const screen = document.getElementById("completeScreen");
 
-form.addEventListener("submit", async function(event){
+form.addEventListener("submit", async (e) => {
 
-  event.preventDefault();
+  e.preventDefault();
 
-  const date = document.getElementById("date").value;
+  const date = dateInput.value;
 
-  if(!date){
-    alert("Please select a date.");
-    return;
-  }
+  const day = new Date(date + "T00:00:00").getDay();
 
-  const selectedDate = new Date(date + "T00:00:00");
-
-  const day = selectedDate.getDay();
-
-  // Wednesday = 3
   if(day !== 3){
-
-    alert("Bookings are only available on Wednesdays.");
-
+    alert("Only Wednesdays are available.");
     return;
   }
 
-  const formData = new FormData(form);
-
-  const response = await fetch(form.action, {
-    method: form.method,
-    body: formData,
-    headers: {
-      'Accept': 'application/json'
-    }
+  const res = await fetch(form.action, {
+    method:"POST",
+    body:new FormData(form),
+    headers:{ "Accept":"application/json" }
   });
 
-  if(response.ok){
-
+  if(res.ok){
     form.reset();
-
-    document.getElementById("successMessage").style.display = "block";
-
+    screen.style.display = "flex";
   } else {
-
-    alert("Something went wrong. Please try again.");
-
+    alert("Something went wrong.");
   }
 
 });
+
+function closeScreen(){
+  screen.style.display = "none";
+}
 
 </script>
 
