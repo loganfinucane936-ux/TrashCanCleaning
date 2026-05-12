@@ -68,9 +68,7 @@ button:hover{
 <form id="bookingForm">
 
 <input id="name" placeholder="Name" required>
-
 <input id="address" placeholder="Address" required>
-
 <input id="cans" type="number" min="1" placeholder="Number of Cans" required>
 
 <select id="date" required>
@@ -102,8 +100,13 @@ const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
 
 /* ========================= */
 
+/* FIX: properly define inputs */
 const form = document.getElementById("bookingForm");
 const status = document.getElementById("status");
+
+const nameInput = document.getElementById("name");
+const addressInput = document.getElementById("address");
+const cansInput = document.getElementById("cans");
 const dateSelect = document.getElementById("date");
 const timeSelect = document.getElementById("time");
 
@@ -124,14 +127,9 @@ function loadDates(){
 
         if(date.getMonth() !== month) break;
 
-        // Wednesday = 3
-        // Thursday = 4
         if(date.getDay() === 3 || date.getDay() === 4){
 
-            let dayName =
-                date.getDay() === 3
-                ? "Wednesday"
-                : "Thursday";
+            let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
 
             let formatted =
                 `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
@@ -152,12 +150,10 @@ loadDates();
 ------------------------*/
 dateSelect.addEventListener("change", async () => {
 
-    timeSelect.innerHTML =
-        `<option value="">Loading...</option>`;
+    timeSelect.innerHTML = `<option value="">Loading...</option>`;
 
     if(!dateSelect.value) return;
 
-    // THURSDAY TIMES
     let allTimes =
         dateSelect.value.includes("Thursday")
         ? ["10:00 AM","11:00 AM","12:00 PM"]
@@ -165,7 +161,6 @@ dateSelect.addEventListener("change", async () => {
 
     try {
 
-        // GET BOOKINGS
         const res = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
             {
@@ -177,74 +172,54 @@ dateSelect.addEventListener("change", async () => {
 
         const data = await res.json();
 
-        // FIND BOOKED TIMES
-        const bookedSlots = data.records.map(r => {
-            return r.fields.SlotKey;
-        });
+        const bookedSlots = data.records.map(r => r.fields.SlotKey);
 
-        // RESET
-        timeSelect.innerHTML =
-            `<option value="">Select Time</option>`;
+        timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-        // ADD ONLY AVAILABLE TIMES
         allTimes.forEach(time => {
 
-            const slotKey =
-                dateSelect.value + "|" + time;
+            const slotKey = dateSelect.value + "|" + time;
 
             if(!bookedSlots.includes(slotKey)){
 
                 let opt = document.createElement("option");
-
                 opt.value = time;
                 opt.textContent = time;
 
                 timeSelect.appendChild(opt);
             }
-
         });
 
-        // NO TIMES LEFT
         if(timeSelect.options.length === 1){
-
             let opt = document.createElement("option");
-
             opt.textContent = "No Times Available";
             opt.disabled = true;
-
             timeSelect.appendChild(opt);
         }
 
     } catch(err){
-
         console.log(err);
-
-        timeSelect.innerHTML =
-            `<option value="">Error Loading Times</option>`;
+        timeSelect.innerHTML = `<option value="">Error Loading Times</option>`;
     }
-
 });
 
 /* -----------------------
    SUBMIT
 ------------------------*/
 form.addEventListener("submit", async (e) => {
-
     e.preventDefault();
 
     const bookingData = {
-
-        Name: name.value,
-        Address: address.value,
-        Cans: Number(cans.value),
-        Date: date.value,
-        Time: time.value,
-        SlotKey: date.value + "|" + time.value
+        Name: nameInput.value,
+        Address: addressInput.value,
+        Cans: Number(cansInput.value),
+        Date: dateSelect.value,
+        Time: timeSelect.value,
+        SlotKey: dateSelect.value + "|" + timeSelect.value
     };
 
     try {
 
-        // DOUBLE CHECK SLOT
         const checkRes = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula={SlotKey}="${bookingData.SlotKey}"`,
             {
@@ -257,15 +232,11 @@ form.addEventListener("submit", async (e) => {
         const checkData = await checkRes.json();
 
         if(checkData.records.length > 0){
-
             status.style.color = "red";
-            status.innerHTML =
-                "❌ This time slot is already booked.";
-
+            status.innerHTML = "❌ This time slot is already booked.";
             return;
         }
 
-        // SAVE TO AIRTABLE
         const res = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
             {
@@ -274,24 +245,18 @@ form.addEventListener("submit", async (e) => {
                     "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
                     "Content-Type":"application/json"
                 },
-                body: JSON.stringify({
-                    fields: bookingData
-                })
+                body: JSON.stringify({ fields: bookingData })
             }
         );
 
         const text = await res.text();
 
         if(!res.ok){
-
             status.style.color = "red";
-            status.innerHTML =
-                "❌ Error:\n" + text;
-
+            status.innerHTML = "❌ Error:\n" + text;
             return;
         }
 
-        // SEND TO FORMSPREE
         await fetch(FORMSPREE_URL,{
             method:"POST",
             headers:{
@@ -301,23 +266,16 @@ form.addEventListener("submit", async (e) => {
         });
 
         status.style.color = "green";
-        status.innerHTML =
-            "✅ Booking Confirmed!";
+        status.innerHTML = "✅ Booking Confirmed!";
 
         form.reset();
-
-        timeSelect.innerHTML =
-            `<option value="">Select Time</option>`;
+        timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
     } catch(err){
-
         console.log(err);
-
         status.style.color = "red";
-        status.innerHTML =
-            "❌ Network Error";
+        status.innerHTML = "❌ Network Error";
     }
-
 });
 
 </script>
