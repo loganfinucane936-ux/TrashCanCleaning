@@ -21,38 +21,12 @@ body{
     width:360px;
     padding:25px;
     border-radius:18px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-}
-
-h1{
-    text-align:center;
 }
 
 input, select, button{
     width:100%;
     padding:12px;
     margin-top:10px;
-    border-radius:10px;
-    border:1px solid #ccc;
-    font-size:16px;
-}
-
-button{
-    background:#28a745;
-    color:white;
-    border:none;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#218838;
-}
-
-#status{
-    margin-top:15px;
-    text-align:center;
-    font-weight:bold;
 }
 </style>
 </head>
@@ -65,21 +39,24 @@ button:hover{
 
 <form id="bookingForm">
 
-<input id="name" name="name" placeholder="Name" required>
-<input id="address" name="address" placeholder="Address" required>
+<input id="name" placeholder="Name" required>
+<input id="address" placeholder="Address" required>
 
-<select id="cans" name="cans" required>
+<select id="cans" required>
     <option value="">Cans</option>
     <option>1 Can</option>
     <option>2 Cans</option>
-    <option>3 Cans</option>
-    <option>4 Cans</option>
 </select>
 
-<select id="date" name="date" required></select>
-<select id="time" name="time" required></select>
+<select id="date" required>
+    <option value="">Select Date</option>
+</select>
 
-<button type="submit">Book Now</button>
+<select id="time" required>
+    <option value="">Select Time</option>
+</select>
+
+<button type="submit">Book</button>
 
 </form>
 
@@ -90,120 +67,131 @@ button:hover{
 <script>
 
 /* =========================
-   🔴 EDIT THESE
+   🔴 PASTE YOUR INFO HERE
    ========================= */
 
-// Airtable
+// 🔑 Airtable API token
 const AIRTABLE_TOKEN = patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db;
+
+// 🧾 Airtable Base ID
 const BASE_ID = "appiSgF39h6jIasNa";
+
+// 📊 Table name in Airtable
 const TABLE_NAME = "Bookings";
 
-// Formspree
+// 📧 Formspree link
 const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
 
 /* ========================= */
 
-const dateSelect = document.getElementById("date");
-const timeSelect = document.getElementById("time");
-const form = document.getElementById("bookingForm");
-const status = document.getElementById("status");
+document.addEventListener("DOMContentLoaded", () => {
 
-// Generate Wed + Thu dates
-const today = new Date();
-const year = today.getFullYear();
-const month = today.getMonth();
+    const dateSelect = document.getElementById("date");
+    const timeSelect = document.getElementById("time");
+    const form = document.getElementById("bookingForm");
+    const status = document.getElementById("status");
 
-for(let d=1; d<=31; d++){
-    let date = new Date(year, month, d);
-    if(date.getMonth() !== month) break;
+    // ------------------------
+    // LOAD DATES
+    // ------------------------
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
 
-    if(date.getDay() === 3 || date.getDay() === 4){
+    for (let d = 1; d <= 31; d++) {
 
-        let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
+        let date = new Date(year, month, d);
+        if (date.getMonth() !== month) break;
 
-        let option = document.createElement("option");
-        option.value =
-            `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
-        option.textContent = option.value;
+        if (date.getDay() === 3 || date.getDay() === 4) {
 
-        dateSelect.appendChild(option);
+            let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
+
+            let opt = document.createElement("option");
+            opt.value = `${dayName} - ${date.getMonth()+1}/${date.getDate()}`;
+            opt.textContent = opt.value;
+
+            dateSelect.appendChild(opt);
+        }
     }
-}
 
-// Change times based on day
-dateSelect.addEventListener("change", () => {
+    // ------------------------
+    // TIMES SWITCH
+    // ------------------------
+    dateSelect.addEventListener("change", () => {
 
-    timeSelect.innerHTML = `<option value="">Select Time</option>`;
-
-    if(dateSelect.value.includes("Thursday")){
-
-        ["10:00 AM","11:00 AM","12:00 PM"].forEach(t=>{
-            let o=document.createElement("option");
-            o.value=t;
-            o.textContent=t;
-            timeSelect.appendChild(o);
-        });
-
-    } else {
-
-        ["12:00 PM","1:00 PM","2:00 PM","2:30 PM","3:00 PM","4:00 PM"].forEach(t=>{
-            let o=document.createElement("option");
-            o.value=t;
-            o.textContent=t;
-            timeSelect.appendChild(o);
-        });
-
-    }
-});
-
-// Submit BOTH Airtable + Formspree
-form.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-
-    const bookingData = {
-        Name: name.value,
-        Address: address.value,
-        Cans: cans.value,
-        Date: date.value,
-        Time: time.value,
-        SlotKey: date.value + "|" + time.value
-    };
-
-    try {
-
-        // 1. Send to Airtable
-        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
-            method:"POST",
-            headers:{
-                "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
-                "Content-Type":"application/json"
-            },
-            body: JSON.stringify({ fields: bookingData })
-        });
-
-        // 2. Send to Formspree (email)
-        await fetch(FORMSPREE_URL, {
-            method:"POST",
-            headers:{
-                "Accept":"application/json",
-                "Content-Type":"application/json"
-            },
-            body: JSON.stringify(bookingData)
-        });
-
-        status.style.color = "green";
-        status.innerHTML = "Booking Confirmed!";
-        form.reset();
         timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-    } catch (err) {
+        if (dateSelect.value.includes("Thursday")) {
 
-        status.style.color = "red";
-        status.innerHTML = "Error sending booking.";
+            ["10:00 AM","11:00 AM","12:00 PM"].forEach(t => {
+                let o = document.createElement("option");
+                o.value = t;
+                o.textContent = t;
+                timeSelect.appendChild(o);
+            });
 
-    }
+        } else {
+
+            ["12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM"].forEach(t => {
+                let o = document.createElement("option");
+                o.value = t;
+                o.textContent = t;
+                timeSelect.appendChild(o);
+            });
+
+        }
+    });
+
+    // ------------------------
+    // SUBMIT (AIRTABLE + FORMSPREE)
+    // ------------------------
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const data = {
+            Name: name.value,
+            Address: address.value,
+            Cans: cans.value,
+            Date: date.value,
+            Time: time.value,
+            SlotKey: date.value + "|" + time.value
+        };
+
+        try {
+
+            // Airtable
+            await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ fields: data })
+            });
+
+            // Formspree
+            await fetch(FORMSPREE_URL, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            status.style.color = "green";
+            status.innerHTML = "Booking Confirmed!";
+            form.reset();
+            timeSelect.innerHTML = `<option value="">Select Time</option>`;
+
+        } catch (err) {
+            status.style.color = "red";
+            status.innerHTML = "Error sending booking.";
+        }
+    });
+
 });
-
 </script>
 
 </body>
