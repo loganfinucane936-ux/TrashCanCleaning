@@ -21,12 +21,34 @@ body{
     width:360px;
     padding:25px;
     border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
+
+h1{text-align:center;}
 
 input, select, button{
     width:100%;
     padding:12px;
     margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:16px;
+}
+
+button{
+    background:#28a745;
+    color:white;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{background:#218838;}
+
+#status{
+    margin-top:15px;
+    text-align:center;
+    font-weight:bold;
 }
 </style>
 </head>
@@ -42,11 +64,8 @@ input, select, button{
 <input id="name" placeholder="Name" required>
 <input id="address" placeholder="Address" required>
 
-<select id="cans" required>
-    <option value="">Cans</option>
-    <option>1 Can</option>
-    <option>2 Cans</option>
-</select>
+<!-- CANS AS NUMBER -->
+<input id="cans" type="number" min="1" max="10" placeholder="Number of Cans" required>
 
 <select id="date" required>
     <option value="">Select Date</option>
@@ -56,7 +75,7 @@ input, select, button{
     <option value="">Select Time</option>
 </select>
 
-<button type="submit">Book</button>
+<button type="submit">Book Now</button>
 
 </form>
 
@@ -67,19 +86,12 @@ input, select, button{
 <script>
 
 /* =========================
-   🔴 PASTE YOUR INFO HERE
+   🔴 EDIT THESE ONLY
    ========================= */
 
-// 🔑 Airtable API token
-const AIRTABLE_TOKEN = patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db;
-
-// 🧾 Airtable Base ID
+const AIRTABLE_TOKEN = "PASTE_YOUR_API_TOKEN_HERE";
 const BASE_ID = "appiSgF39h6jIasNa";
-
-// 📊 Table name in Airtable
 const TABLE_NAME = "Bookings";
-
-// 📧 Formspree link
 const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
 
 /* ========================= */
@@ -91,16 +103,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("bookingForm");
     const status = document.getElementById("status");
 
-    // ------------------------
-    // LOAD DATES
-    // ------------------------
+    // -----------------------
+    // LOAD WED + THU DATES
+    // -----------------------
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
 
+    dateSelect.innerHTML = `<option value="">Select Date</option>`;
+
     for (let d = 1; d <= 31; d++) {
 
         let date = new Date(year, month, d);
+
         if (date.getMonth() !== month) break;
 
         if (date.getDay() === 3 || date.getDay() === 4) {
@@ -108,51 +123,44 @@ document.addEventListener("DOMContentLoaded", () => {
             let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
 
             let opt = document.createElement("option");
-            opt.value = `${dayName} - ${date.getMonth()+1}/${date.getDate()}`;
+            opt.value = `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
             opt.textContent = opt.value;
 
             dateSelect.appendChild(opt);
         }
     }
 
-    // ------------------------
-    // TIMES SWITCH
-    // ------------------------
+    // -----------------------
+    // TIME SWITCHER
+    // -----------------------
     dateSelect.addEventListener("change", () => {
 
         timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-        if (dateSelect.value.includes("Thursday")) {
+        if (!dateSelect.value) return;
 
-            ["10:00 AM","11:00 AM","12:00 PM"].forEach(t => {
-                let o = document.createElement("option");
-                o.value = t;
-                o.textContent = t;
-                timeSelect.appendChild(o);
-            });
+        let times = dateSelect.value.includes("Thursday")
+            ? ["10:00 AM","11:00 AM","12:00 PM"]
+            : ["12:00 PM","1:00 PM","2:00 PM","2:30 PM","3:00 PM","4:00 PM"];
 
-        } else {
-
-            ["12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM"].forEach(t => {
-                let o = document.createElement("option");
-                o.value = t;
-                o.textContent = t;
-                timeSelect.appendChild(o);
-            });
-
-        }
+        times.forEach(t => {
+            let opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            timeSelect.appendChild(opt);
+        });
     });
 
-    // ------------------------
-    // SUBMIT (AIRTABLE + FORMSPREE)
-    // ------------------------
+    // -----------------------
+    // SUBMIT (SAFE FIXED)
+    // -----------------------
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const data = {
+        const bookingData = {
             Name: name.value,
             Address: address.value,
-            Cans: cans.value,
+            Cans: Number(cans.value), // IMPORTANT FIX
             Date: date.value,
             Time: time.value,
             SlotKey: date.value + "|" + time.value
@@ -167,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ fields: data })
+                body: JSON.stringify({ fields: bookingData })
             });
 
             // Formspree
@@ -177,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "Accept": "application/json",
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(bookingData)
             });
 
             status.style.color = "green";
@@ -186,8 +194,12 @@ document.addEventListener("DOMContentLoaded", () => {
             timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
         } catch (err) {
+
+            console.log(err);
+
             status.style.color = "red";
-            status.innerHTML = "Error sending booking.";
+            status.innerHTML = "Booking failed. Check Airtable setup.";
+
         }
     });
 
