@@ -6,13 +6,9 @@
 <title>Booking System</title>
 
 <style>
-*{
-    box-sizing:border-box;
-}
-
 body{
     margin:0;
-    font-family:Arial,sans-serif;
+    font-family:Arial;
     background:linear-gradient(135deg,#4facfe,#00f2fe);
     height:100vh;
     display:flex;
@@ -22,35 +18,29 @@ body{
 
 .container{
     background:white;
-    width:350px;
-    padding:30px;
-    border-radius:20px;
+    width:360px;
+    padding:25px;
+    border-radius:18px;
     box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
 h1{
     text-align:center;
-    margin-bottom:20px;
 }
 
-input, select{
+input, select, button{
     width:100%;
-    padding:14px;
-    margin-top:12px;
+    padding:12px;
+    margin-top:10px;
     border-radius:10px;
     border:1px solid #ccc;
     font-size:16px;
 }
 
 button{
-    width:100%;
-    padding:14px;
-    margin-top:18px;
-    border:none;
-    border-radius:10px;
     background:#28a745;
     color:white;
-    font-size:17px;
+    border:none;
     font-weight:bold;
     cursor:pointer;
 }
@@ -60,157 +50,160 @@ button:hover{
 }
 
 #status{
-    margin-top:18px;
+    margin-top:15px;
     text-align:center;
     font-weight:bold;
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>Booking System</h1>
+<h1>Booking System</h1>
 
-    <form id="bookingForm">
+<form id="bookingForm">
 
-        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+<input id="name" name="name" placeholder="Name" required>
+<input id="address" name="address" placeholder="Address" required>
 
-        <input type="text" id="address" name="address" placeholder="Enter your address" required>
+<select id="cans" name="cans" required>
+    <option value="">Cans</option>
+    <option>1 Can</option>
+    <option>2 Cans</option>
+    <option>3 Cans</option>
+    <option>4 Cans</option>
+</select>
 
-        <select id="cans" name="cans" required>
-            <option value="">Number of Cans</option>
-            <option value="1 Can">1 Can</option>
-            <option value="2 Cans">2 Cans</option>
-            <option value="3 Cans">3 Cans</option>
-            <option value="4 Cans">4 Cans</option>
-            <option value="5 Cans">5 Cans</option>
-        </select>
+<select id="date" name="date" required></select>
+<select id="time" name="time" required></select>
 
-        <select id="date" name="date" required>
-            <option value="">Select Date</option>
-        </select>
+<button type="submit">Book Now</button>
 
-        <select id="time" name="time" required>
-            <option value="">Select Time</option>
-        </select>
+</form>
 
-        <button type="submit">Book Now</button>
-
-    </form>
-
-    <div id="status"></div>
+<div id="status"></div>
 
 </div>
 
 <script>
+
+/* =========================
+   🔴 EDIT THESE
+   ========================= */
+
+// Airtable
+const AIRTABLE_TOKEN = patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db;
+const BASE_ID = "appiSgF39h6jIasNa";
+const TABLE_NAME = "Bookings";
+
+// Formspree
+const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
+
+/* ========================= */
+
 const dateSelect = document.getElementById("date");
 const timeSelect = document.getElementById("time");
-const bookingForm = document.getElementById("bookingForm");
+const form = document.getElementById("bookingForm");
 const status = document.getElementById("status");
 
-// Generate Wednesdays + Thursdays
+// Generate Wed + Thu dates
 const today = new Date();
 const year = today.getFullYear();
 const month = today.getMonth();
 
-let availableDates = [];
-
-for(let day = 1; day <= 31; day++){
-    const date = new Date(year, month, day);
-
+for(let d=1; d<=31; d++){
+    let date = new Date(year, month, d);
     if(date.getMonth() !== month) break;
 
-    // Wednesday = 3, Thursday = 4
     if(date.getDay() === 3 || date.getDay() === 4){
 
-        let weekday = date.getDay() === 3 ? "Wednesday" : "Thursday";
+        let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
 
-        const formatted =
-            weekday + " - " +
-            (date.getMonth()+1) + "/" +
-            date.getDate() + "/" +
-            date.getFullYear();
+        let option = document.createElement("option");
+        option.value =
+            `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+        option.textContent = option.value;
 
-        availableDates.push({
-            label: formatted,
-            day: date.getDay()
-        });
+        dateSelect.appendChild(option);
     }
 }
 
-// Fill date dropdown
-availableDates.forEach(d => {
-    const option = document.createElement("option");
-    option.value = JSON.stringify(d);
-    option.textContent = d.label;
-    dateSelect.appendChild(option);
-});
-
-// Time sets
-const wednesdayTimes = [
-    "12:00 PM",
-    "1:00 PM",
-    "2:00 PM",
-    "2:30 PM",
-    "3:00 PM",
-    "4:00 PM"
-];
-
-const thursdayTimes = [
-    "10:00 AM",
-    "11:00 AM",
-    "12:00 PM"
-];
-
-// Update times when date changes
+// Change times based on day
 dateSelect.addEventListener("change", () => {
 
     timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-    if(!dateSelect.value) return;
+    if(dateSelect.value.includes("Thursday")){
 
-    const selected = JSON.parse(dateSelect.value);
-
-    let times = selected.day === 3 ? wednesdayTimes : thursdayTimes;
-
-    times.forEach(t => {
-        const option = document.createElement("option");
-        option.value = t;
-        option.textContent = t;
-        timeSelect.appendChild(option);
-    });
-});
-
-// Submit to Formspree
-bookingForm.addEventListener("submit", async function(e){
-
-    e.preventDefault();
-
-    const formData = new FormData(bookingForm);
-
-    const response = await fetch("https://formspree.io/f/xpqbkvlr", {
-        method: "POST",
-        body: formData,
-        headers: {
-            "Accept": "application/json"
-        }
-    });
-
-    if(response.ok){
-
-        status.style.color = "green";
-        status.innerHTML = "Booking Confirmed!";
-        bookingForm.reset();
-        timeSelect.innerHTML = `<option value="">Select Time</option>`;
+        ["10:00 AM","11:00 AM","12:00 PM"].forEach(t=>{
+            let o=document.createElement("option");
+            o.value=t;
+            o.textContent=t;
+            timeSelect.appendChild(o);
+        });
 
     } else {
 
-        status.style.color = "red";
-        status.innerHTML = "Something went wrong.";
+        ["12:00 PM","1:00 PM","2:00 PM","2:30 PM","3:00 PM","4:00 PM"].forEach(t=>{
+            let o=document.createElement("option");
+            o.value=t;
+            o.textContent=t;
+            timeSelect.appendChild(o);
+        });
 
     }
 });
+
+// Submit BOTH Airtable + Formspree
+form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+
+    const bookingData = {
+        Name: name.value,
+        Address: address.value,
+        Cans: cans.value,
+        Date: date.value,
+        Time: time.value,
+        SlotKey: date.value + "|" + time.value
+    };
+
+    try {
+
+        // 1. Send to Airtable
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`, {
+            method:"POST",
+            headers:{
+                "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({ fields: bookingData })
+        });
+
+        // 2. Send to Formspree (email)
+        await fetch(FORMSPREE_URL, {
+            method:"POST",
+            headers:{
+                "Accept":"application/json",
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        status.style.color = "green";
+        status.innerHTML = "Booking Confirmed!";
+        form.reset();
+        timeSelect.innerHTML = `<option value="">Select Time</option>`;
+
+    } catch (err) {
+
+        status.style.color = "red";
+        status.innerHTML = "Error sending booking.";
+
+    }
+});
+
 </script>
 
 </body>
