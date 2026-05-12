@@ -2,198 +2,218 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Booking System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trash Can Cleaning Service</title>
 
 <style>
-
-body{
-  margin:0;
-  font-family:Arial;
-  background:#f4f4f4;
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  margin: 0;
 }
 
-header{
-  background:#2e7d32;
-  color:white;
-  text-align:center;
-  padding:40px;
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
 }
 
-section{
-  max-width:850px;
-  margin:20px auto;
-  background:white;
-  padding:25px;
-  border-radius:15px;
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
 }
 
-h2{color:#2e7d32;}
-
-input, textarea{
-  width:100%;
-  padding:14px;
-  margin:8px 0;
-  border-radius:10px;
-  border:2px solid #ddd;
+button {
+  background: green;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
-button{
-  background:#2e7d32;
-  color:white;
-  padding:15px;
-  border:none;
-  border-radius:10px;
-  font-size:18px;
-  cursor:pointer;
+button:hover { background: darkgreen; }
+
+.admin-btn {
+  background: black;
+  margin-top: 15px;
 }
 
-button:hover{
-  background:#256628;
+#adminPanel {
+  display: none;
+  margin-top: 20px;
+  border-top: 2px solid #ddd;
+  padding-top: 15px;
 }
 
-.note{
-  background:#e8f5e9;
-  padding:10px;
-  border-radius:10px;
-  font-weight:bold;
+.booking-item {
+  background: #eee;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
 }
 
-#completeScreen{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:#2e7d32;
-  color:white;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  font-size:26px;
-  z-index:9999;
+.delete-btn {
+  background: red;
+  margin-top: 5px;
 }
 
-#completeScreen button{
-  margin-top:20px;
-  background:white;
-  color:#2e7d32;
+#deleteAllBtn {
+  display: none;
+  background: darkred;
+  margin-top: 10px;
 }
-
 </style>
 </head>
 
 <body>
 
-<header>
-<h1>🗑️ Trash Can Cleaning</h1>
-</header>
+<div class="container">
+  <h2>Book a Service</h2>
 
-<section>
+  <input id="name" placeholder="Full Name">
+  <input id="address" placeholder="Address">
 
-<h2>About</h2>
-<p>Professional trash can cleaning service.</p>
+  <input type="date" id="date">
 
-</section>
+  <select id="time">
+    <option>9:00 AM</option>
+    <option>10:00 AM</option>
+    <option>11:00 AM</option>
+    <option>1:00 PM</option>
+    <option>2:00 PM</option>
+    <option>3:00 PM</option>
+  </select>
 
-<section>
+  <button onclick="book()">Book Now</button>
 
-<h2>Pricing</h2>
-<p><b>$15 per can</b></p>
-<p><b>2 cans for $25</b></p>
+  <div id="msg"></div>
 
-</section>
+  <button class="admin-btn" onclick="showAdmin()">Admin Panel</button>
 
-<section>
+  <div id="adminPanel">
+    <h3>Admin Panel</h3>
 
-<h2>Book a Cleaning</h2>
+    <div id="adminLoginBox">
+      <input type="password" id="adminPass" placeholder="Enter Admin Password">
+      <button onclick="checkAdmin()">Login</button>
+    </div>
 
-<div class="note">
-ONLY Wednesdays available — times auto-block when booked
+    <button id="deleteAllBtn" onclick="deleteAll()">Delete All Bookings</button>
+
+    <div id="adminList"></div>
+  </div>
 </div>
 
-<form id="form">
+<script>
+let bookings = JSON.parse(localStorage.getItem("bookings")) || {};
+let adminUnlocked = false;
 
-<input id="name" placeholder="Name" required>
-<input id="address" placeholder="Address" required>
-<input id="cans" type="number" placeholder="Cans" required>
-
-<input id="date" type="date" required>
-<input id="time" type="time" required>
-
-<textarea id="notes" placeholder="Notes"></textarea>
-
-<button type="submit">Book Now</button>
-
-</form>
-
-</section>
-
-<div id="completeScreen">
-  <div>✅ Booking Complete!<br><br>Can’t wait to see you!</div>
-  <button onclick="closeScreen()">Done</button>
-</div>
-
-<!-- FIREBASE -->
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// 🔴 PUT YOUR FIREBASE CONFIG HERE
-const firebaseConfig = YOUR_FIREBASE_CONFIG;
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const form = document.getElementById("form");
-const screen = document.getElementById("completeScreen");
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const name = document.getElementById("name").value;
-  const address = document.getElementById("address").value;
-  const cans = document.getElementById("cans").value;
+function book() {
+  const name = document.getElementById("name").value.trim();
+  const address = document.getElementById("address").value.trim();
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
-  const notes = document.getElementById("notes").value;
+  const msg = document.getElementById("msg");
 
-  const day = new Date(date + "T00:00:00").getDay();
-
-  // ONLY WEDNESDAY
-  if(day !== 3){
-    alert("Only Wednesdays are available.");
+  if (!name || !address || !date || !time) {
+    msg.innerText = "Fill out all fields.";
+    msg.style.color = "red";
     return;
   }
 
-  const slotId = `${date}_${time}`;
-  const slotRef = doc(db, "bookings", slotId);
-  const snap = await getDoc(slotRef);
+  const [y, m, d] = date.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
 
-  // BLOCK if already booked
-  if(snap.exists()){
-    alert("That time is already booked. Pick another.");
+  if (dateObj.getDay() !== 3) {
+    msg.innerText = "Only Wednesdays allowed.";
+    msg.style.color = "red";
     return;
   }
 
-  // SAVE booking
-  await setDoc(slotRef, {
-    name,
-    address,
-    cans,
-    date,
-    time,
-    notes
-  });
+  const key = date + "_" + time;
 
-  form.reset();
-  screen.style.display = "flex";
+  if (bookings[key]) {
+    msg.innerText = "This slot is already booked!";
+    msg.style.color = "red";
+    return;
+  }
 
-});
+  bookings[key] = { name, address, date, time };
+  localStorage.setItem("bookings", JSON.stringify(bookings));
 
-function closeScreen(){
-  screen.style.display = "none";
+  msg.innerText = "Booking successful!";
+  msg.style.color = "green";
 }
 
+function showAdmin() {
+  document.getElementById("adminPanel").style.display = "block";
+}
+
+function checkAdmin() {
+  const pass = document.getElementById("adminPass").value;
+
+  if (pass !== "Charles2013") {
+    alert("Wrong password!");
+    return;
+  }
+
+  adminUnlocked = true;
+
+  document.getElementById("adminLoginBox").style.display = "none";
+  document.getElementById("deleteAllBtn").style.display = "block";
+
+  renderAdmin();
+}
+
+function renderAdmin() {
+  if (!adminUnlocked) return;
+
+  const list = document.getElementById("adminList");
+  list.innerHTML = "<h4>All Bookings</h4>";
+
+  const keys = Object.keys(bookings);
+
+  if (keys.length === 0) {
+    list.innerHTML += "<p>No bookings yet</p>";
+    return;
+  }
+
+  keys.forEach((key) => {
+    const b = bookings[key];
+
+    const div = document.createElement("div");
+    div.className = "booking-item";
+
+    div.innerHTML = `
+      <b>${b.date} - ${b.time}</b><br>
+      ${b.name}<br>
+      ${b.address}<br>
+      <button class="delete-btn" onclick="deleteBooking('${key}')">Delete</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function deleteBooking(key) {
+  if (!confirm("Delete this booking?")) return;
+
+  delete bookings[key];
+  localStorage.setItem("bookings", JSON.stringify(bookings));
+  renderAdmin();
+}
+
+function deleteAll() {
+  if (!confirm("DELETE ALL BOOKINGS? This cannot be undone.")) return;
+
+  // 🔥 FULL RESET (FIXED)
+  bookings = {};
+  localStorage.removeItem("bookings");
+
+  renderAdmin();
+}
 </script>
 
 </body>
