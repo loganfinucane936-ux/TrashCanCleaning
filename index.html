@@ -7,54 +7,54 @@
 
 <style>
 body{
-  margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#4facfe,#00f2fe);
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#4facfe,#00f2fe);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
 .container{
-  background:white;
-  width:380px;
-  padding:25px;
-  border-radius:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    background:white;
+    width:380px;
+    padding:25px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
 h1{
-  text-align:center;
+    text-align:center;
 }
 
 input, select, button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:10px;
-  border:1px solid #ccc;
-  font-size:16px;
-  box-sizing:border-box;
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:16px;
+    box-sizing:border-box;
 }
 
 button{
-  background:#28a745;
-  color:white;
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
+    background:#28a745;
+    color:white;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
 }
 
 button:hover{
-  background:#218838;
+    background:#218838;
 }
 
 #status{
-  margin-top:12px;
-  text-align:center;
-  font-weight:bold;
-  white-space:pre-wrap;
+    margin-top:12px;
+    text-align:center;
+    font-weight:bold;
+    white-space:pre-wrap;
 }
 </style>
 </head>
@@ -62,187 +62,264 @@ button:hover{
 <body>
 
 <div class="container">
-  <h1>Book Service</h1>
 
-  <form id="bookingForm">
-    <input id="name" placeholder="Name" required>
-    <input id="address" placeholder="Address" required>
-    <input id="cans" type="number" min="1" placeholder="Number of Cans" required>
+<h1>Book Service</h1>
 
-    <select id="date" required>
-      <option value="">Select Date</option>
-    </select>
+<form id="bookingForm">
 
-    <select id="time" required>
-      <option value="">Select Time</option>
-    </select>
+<input id="name" placeholder="Name" required>
 
-    <button type="submit">Book Now</button>
-  </form>
+<input id="address" placeholder="Address" required>
 
-  <div id="status"></div>
+<input id="cans" type="number" min="1" placeholder="Number of Cans" required>
+
+<select id="date" required>
+    <option value="">Select Date</option>
+</select>
+
+<select id="time" required>
+    <option value="">Select Time</option>
+</select>
+
+<button type="submit">Book Now</button>
+
+</form>
+
+<div id="status"></div>
+
 </div>
 
 <script>
-/* ========================= EDIT THESE ONLY ========================= */
-const AIRTABLE_TOKEN = "patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db";
+
+/* =========================
+   EDIT THESE ONLY
+========================= */
+
+const AIRTABLE_TOKEN = "PASTE_YOUR_API_TOKEN_HERE";
 const BASE_ID = "appiSgF39h6jIasNa";
 const TABLE_NAME = "Bookings";
 const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
+
 /* ========================= */
 
 const form = document.getElementById("bookingForm");
 const status = document.getElementById("status");
-const nameInput = document.getElementById("name");
-const addressInput = document.getElementById("address");
-const cansInput = document.getElementById("cans");
 const dateSelect = document.getElementById("date");
 const timeSelect = document.getElementById("time");
 
-/* ----------------------- LOAD DATES ------------------------*/
+/* -----------------------
+   LOAD DATES
+------------------------*/
 function loadDates(){
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
 
-  dateSelect.innerHTML = <option value="">Select Date</option>;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
 
-  for(let d=1; d<=31; d++){
-    let date = new Date(year, month, d);
-    if(date.getMonth() !== month) break;
+    dateSelect.innerHTML = `<option value="">Select Date</option>`;
 
-    if(date.getDay() === 3 || date.getDay() === 4){
-      let dayName = date.getDay() === 3 ? "Wednesday" : "Thursday";
-      let formatted = ${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()};
+    for(let d=1; d<=31; d++){
 
-      let opt = document.createElement("option");
-      opt.value = formatted;
-      opt.textContent = formatted;
-      dateSelect.appendChild(opt);
+        let date = new Date(year, month, d);
+
+        if(date.getMonth() !== month) break;
+
+        // Wednesday = 3
+        // Thursday = 4
+        if(date.getDay() === 3 || date.getDay() === 4){
+
+            let dayName =
+                date.getDay() === 3
+                ? "Wednesday"
+                : "Thursday";
+
+            let formatted =
+                `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+
+            let opt = document.createElement("option");
+            opt.value = formatted;
+            opt.textContent = formatted;
+
+            dateSelect.appendChild(opt);
+        }
     }
-  }
 }
+
 loadDates();
 
-/* ----------------------- LOAD TIMES ------------------------*/
+/* -----------------------
+   LOAD TIMES
+------------------------*/
 dateSelect.addEventListener("change", async () => {
-  timeSelect.innerHTML = <option value="">Loading...</option>;
 
-  if(!dateSelect.value) return;
+    timeSelect.innerHTML =
+        `<option value="">Loading...</option>`;
 
-  let allTimes = dateSelect.value.includes("Thursday")
-    ? ["10:00 AM","11:00 AM","12:00 PM"]
-    : ["12:00 PM","1:00 PM","2:00 PM","2:30 PM","3:00 PM","4:00 PM"];
+    if(!dateSelect.value) return;
 
-  try {
-    const res = await fetch(
-      https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME},
-      {
-        headers:{
-          "Authorization": Bearer ${AIRTABLE_TOKEN}
+    // THURSDAY TIMES
+    let allTimes =
+        dateSelect.value.includes("Thursday")
+        ? ["10:00 AM","11:00 AM","12:00 PM"]
+        : ["12:00 PM","1:00 PM","2:00 PM","2:30 PM","3:00 PM","4:00 PM"];
+
+    try {
+
+        // GET BOOKINGS
+        const res = await fetch(
+            `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
+            {
+                headers:{
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`
+                }
+            }
+        );
+
+        const data = await res.json();
+
+        // FIND BOOKED TIMES
+        const bookedSlots = data.records.map(r => {
+            return r.fields.SlotKey;
+        });
+
+        // RESET
+        timeSelect.innerHTML =
+            `<option value="">Select Time</option>`;
+
+        // ADD ONLY AVAILABLE TIMES
+        allTimes.forEach(time => {
+
+            const slotKey =
+                dateSelect.value + "|" + time;
+
+            if(!bookedSlots.includes(slotKey)){
+
+                let opt = document.createElement("option");
+
+                opt.value = time;
+                opt.textContent = time;
+
+                timeSelect.appendChild(opt);
+            }
+
+        });
+
+        // NO TIMES LEFT
+        if(timeSelect.options.length === 1){
+
+            let opt = document.createElement("option");
+
+            opt.textContent = "No Times Available";
+            opt.disabled = true;
+
+            timeSelect.appendChild(opt);
         }
-      }
-    );
 
-    const data = await res.json();
-    const bookedSlots = data.records.map(r => r.fields.SlotKey);
+    } catch(err){
 
-    timeSelect.innerHTML = <option value="">Select Time</option>;
+        console.log(err);
 
-    allTimes.forEach(time => {
-      const slotKey = dateSelect.value + "|" + time;
-
-      if(!bookedSlots.includes(slotKey)){
-        let opt = document.createElement("option");
-        opt.value = time;
-        opt.textContent = time;
-        timeSelect.appendChild(opt);
-      }
-    });
-
-    if(timeSelect.options.length === 1){
-      let opt = document.createElement("option");
-      opt.textContent = "No Times Available";
-      opt.disabled = true;
-      timeSelect.appendChild(opt);
+        timeSelect.innerHTML =
+            `<option value="">Error Loading Times</option>`;
     }
 
-  } catch(err){
-    console.log(err);
-    timeSelect.innerHTML = <option value="">Error Loading Times</option>;
-  }
 });
 
-/* ----------------------- SUBMIT ------------------------*/
+/* -----------------------
+   SUBMIT
+------------------------*/
 form.addEventListener("submit", async (e) => {
-  e.preventDefault();
 
-  const bookingData = {
-    Name: nameInput.value,
-    Address: addressInput.value,
-    Cans: Number(cansInput.value),
-    Date: dateSelect.value,
-    Time: timeSelect.value,
-    SlotKey: dateSelect.value + "|" + timeSelect.value
-  };
+    e.preventDefault();
 
-  try {
-    const checkRes = await fetch(
-      https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula={SlotKey}="${bookingData.SlotKey}",
-      {
-        headers:{
-          "Authorization": Bearer ${AIRTABLE_TOKEN}
+    const bookingData = {
+
+        Name: name.value,
+        Address: address.value,
+        Cans: Number(cans.value),
+        Date: date.value,
+        Time: time.value,
+        SlotKey: date.value + "|" + time.value
+    };
+
+    try {
+
+        // DOUBLE CHECK SLOT
+        const checkRes = await fetch(
+            `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula={SlotKey}="${bookingData.SlotKey}"`,
+            {
+                headers:{
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`
+                }
+            }
+        );
+
+        const checkData = await checkRes.json();
+
+        if(checkData.records.length > 0){
+
+            status.style.color = "red";
+            status.innerHTML =
+                "❌ This time slot is already booked.";
+
+            return;
         }
-      }
-    );
 
-    const checkData = await checkRes.json();
+        // SAVE TO AIRTABLE
+        const res = await fetch(
+            `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
+            {
+                method:"POST",
+                headers:{
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+                    "Content-Type":"application/json"
+                },
+                body: JSON.stringify({
+                    fields: bookingData
+                })
+            }
+        );
 
-    if(checkData.records.length > 0){
-      status.style.color = "red";
-      status.innerHTML = "❌ This time slot is already booked.";
-      return;
+        const text = await res.text();
+
+        if(!res.ok){
+
+            status.style.color = "red";
+            status.innerHTML =
+                "❌ Error:\n" + text;
+
+            return;
+        }
+
+        // SEND TO FORMSPREE
+        await fetch(FORMSPREE_URL,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        status.style.color = "green";
+        status.innerHTML =
+            "✅ Booking Confirmed!";
+
+        form.reset();
+
+        timeSelect.innerHTML =
+            `<option value="">Select Time</option>`;
+
+    } catch(err){
+
+        console.log(err);
+
+        status.style.color = "red";
+        status.innerHTML =
+            "❌ Network Error";
     }
 
-    const res = await fetch(
-      https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME},
-      {
-        method:"POST",
-        headers:{
-          "Authorization": Bearer ${AIRTABLE_TOKEN},
-          "Content-Type":"application/json"
-        },
-        body: JSON.stringify({ fields: bookingData })
-      }
-    );
-
-    const text = await res.text();
-
-    if(!res.ok){
-      status.style.color = "red";
-      status.innerHTML = "❌ Error:\n" + text;
-      return;
-    }
-
-    await fetch(FORMSPREE_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify(bookingData)
-    });
-
-    status.style.color = "green";
-    status.innerHTML = "✅ Booking Confirmed!";
-    form.reset();
-    timeSelect.innerHTML = <option value="">Select Time</option>;
-
-  } catch(err){
-    console.log(err);
-    status.style.color = "red";
-    status.innerHTML = "❌ Network Error";
-  }
 });
+
 </script>
 
 </body>
