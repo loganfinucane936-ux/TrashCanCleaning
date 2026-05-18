@@ -11,10 +11,12 @@ body{
     margin:0;
     font-family:Arial;
     background:linear-gradient(135deg,#4facfe,#00f2fe);
-    height:100vh;
+    min-height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
+    padding:20px;
+    box-sizing:border-box;
 }
 
 .container{
@@ -27,6 +29,7 @@ body{
 
 h1{
     text-align:center;
+    margin-top:0;
 }
 
 input, select, button{
@@ -69,9 +72,17 @@ button:hover{
 
 <form id="bookingForm">
 
-<input id="name" placeholder="Name" required>
+<input
+    id="name"
+    placeholder="Name"
+    required
+>
 
-<input id="address" placeholder="Address" required>
+<input
+    id="address"
+    placeholder="Address"
+    required
+>
 
 <input
     id="cans"
@@ -89,7 +100,9 @@ button:hover{
     <option value="">Select Time</option>
 </select>
 
-<button type="submit">Book Now</button>
+<button type="submit">
+    Book Now
+</button>
 
 </form>
 
@@ -99,53 +112,73 @@ button:hover{
 
 <script>
 
-/* =====================================
+/* ====================================
    CONFIG
-===================================== */
+==================================== */
 
 // PUT YOUR NEW AIRTABLE TOKEN HERE
 const AIRTABLE_TOKEN = "patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db";
 
 const BASE_ID = "appiSgF39h6jIasNa";
+
 const TABLE_NAME = "Bookings";
 
-const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
+const FORMSPREE_URL =
+    "https://formspree.io/f/xpqbkvlr";
 
-/* =====================================
+/* ====================================
    ELEMENTS
-===================================== */
+==================================== */
 
-const form = document.getElementById("bookingForm");
-const status = document.getElementById("status");
+const form =
+    document.getElementById("bookingForm");
 
-const nameInput = document.getElementById("name");
-const addressInput = document.getElementById("address");
-const cansInput = document.getElementById("cans");
+const status =
+    document.getElementById("status");
 
-const dateSelect = document.getElementById("date");
-const timeSelect = document.getElementById("time");
+const nameInput =
+    document.getElementById("name");
 
-/* =====================================
+const addressInput =
+    document.getElementById("address");
+
+const cansInput =
+    document.getElementById("cans");
+
+const dateSelect =
+    document.getElementById("date");
+
+const timeSelect =
+    document.getElementById("time");
+
+/* ====================================
    LOAD DATES
-   WEDNESDAY + THURSDAY ONLY
-===================================== */
+   ALL WEDNESDAYS + THURSDAYS
+   FOR CURRENT YEAR
+==================================== */
 
 function loadDates(){
 
     const today = new Date();
 
+    const currentYear =
+        today.getFullYear();
+
     dateSelect.innerHTML =
         `<option value="">Select Date</option>`;
 
-    for(let i = 0; i < 60; i++){
+    // START FROM TODAY
+    let date = new Date(today);
 
-        let date = new Date();
-
-        date.setDate(today.getDate() + i);
+    // LOOP THROUGH CURRENT YEAR
+    while(date.getFullYear() === currentYear){
 
         // Wednesday = 3
         // Thursday = 4
-        if(date.getDay() === 3 || date.getDay() === 4){
+        if(
+            date.getDay() === 3 ||
+            date.getDay() === 4
+        ){
 
             let dayName =
                 date.getDay() === 3
@@ -155,23 +188,30 @@ function loadDates(){
             let formatted =
                 `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
 
-            let option = document.createElement("option");
+            let option =
+                document.createElement("option");
 
             option.value = formatted;
+
             option.textContent = formatted;
 
             dateSelect.appendChild(option);
         }
+
+        // NEXT DAY
+        date.setDate(date.getDate() + 1);
     }
 }
 
 loadDates();
 
-/* =====================================
+/* ====================================
    LOAD AVAILABLE TIMES
-===================================== */
+==================================== */
 
-dateSelect.addEventListener("change", async () => {
+dateSelect.addEventListener(
+    "change",
+    async () => {
 
     timeSelect.innerHTML =
         `<option value="">Loading...</option>`;
@@ -180,18 +220,21 @@ dateSelect.addEventListener("change", async () => {
         return;
     }
 
+    // THURSDAY TIMES
     let allTimes =
         dateSelect.value.includes("Thursday")
+
         ? [
             "10:00 AM",
             "11:00 AM",
             "12:00 PM"
           ]
+
+        // WEDNESDAY TIMES
         : [
             "12:00 PM",
             "1:00 PM",
             "2:00 PM",
-            "2:30 PM",
             "3:00 PM",
             "4:00 PM"
           ];
@@ -208,11 +251,15 @@ dateSelect.addEventListener("change", async () => {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        console.log("AIRTABLE RESPONSE:", data);
+        console.log(
+            "AIRTABLE RESPONSE:",
+            data
+        );
 
-        // CHECK FOR AIRTABLE ERRORS
+        // HANDLE AIRTABLE ERRORS
         if(data.error){
 
             console.error(data.error);
@@ -229,26 +276,32 @@ dateSelect.addEventListener("change", async () => {
             return;
         }
 
-        // SAFELY READ SLOT KEYS
-        const bookedSlots = (data.records || [])
-            .map(record => record.fields?.SlotKey)
+        // GET BOOKED SLOT KEYS SAFELY
+        const bookedSlots =
+            (data.records || [])
+
+            .map(record =>
+                record.fields?.SlotKey
+            )
+
             .filter(Boolean);
 
         timeSelect.innerHTML =
             `<option value="">Select Time</option>`;
 
+        // SHOW ONLY AVAILABLE TIMES
         allTimes.forEach(time => {
 
             const slotKey =
                 `${dateSelect.value}|${time}`;
 
-            // ONLY SHOW AVAILABLE TIMES
             if(!bookedSlots.includes(slotKey)){
 
                 let option =
                     document.createElement("option");
 
                 option.value = time;
+
                 option.textContent = time;
 
                 timeSelect.appendChild(option);
@@ -271,7 +324,10 @@ dateSelect.addEventListener("change", async () => {
 
     } catch(error){
 
-        console.error("TIME LOAD ERROR:", error);
+        console.error(
+            "TIME LOAD ERROR:",
+            error
+        );
 
         timeSelect.innerHTML =
             `<option value="">Error Loading Times</option>`;
@@ -283,20 +339,30 @@ dateSelect.addEventListener("change", async () => {
     }
 });
 
-/* =====================================
+/* ====================================
    SUBMIT BOOKING
-===================================== */
+==================================== */
 
-form.addEventListener("submit", async (e) => {
+form.addEventListener(
+    "submit",
+    async (e) => {
 
     e.preventDefault();
 
-    const name = nameInput.value.trim();
-    const address = addressInput.value.trim();
-    const cans = Number(cansInput.value);
+    const name =
+        nameInput.value.trim();
 
-    const date = dateSelect.value;
-    const time = timeSelect.value;
+    const address =
+        addressInput.value.trim();
+
+    const cans =
+        Number(cansInput.value);
+
+    const date =
+        dateSelect.value;
+
+    const time =
+        timeSelect.value;
 
     // VALIDATION
     if(
@@ -316,15 +382,19 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    const slotKey = `${date}|${time}`;
+    const slotKey =
+        `${date}|${time}`;
 
     const bookingData = {
 
         Name: name,
+
         Address: address,
+
         Cans: cans,
 
         Date: date,
+
         Time: time,
 
         SlotKey: slotKey
@@ -332,11 +402,12 @@ form.addEventListener("submit", async (e) => {
 
     try{
 
-        /* =========================
+        /* ==========================
            DOUBLE BOOKING CHECK
         ========================== */
 
-        const checkResponse = await fetch(
+        const checkResponse =
+            await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula={SlotKey}="${slotKey}"`,
             {
                 headers:{
@@ -349,8 +420,10 @@ form.addEventListener("submit", async (e) => {
         const checkData =
             await checkResponse.json();
 
-        if(checkData.records &&
-           checkData.records.length > 0){
+        if(
+            checkData.records &&
+            checkData.records.length > 0
+        ){
 
             status.style.color = "red";
 
@@ -360,11 +433,12 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        /* =========================
+        /* ==========================
            SAVE TO AIRTABLE
         ========================== */
 
-        const saveResponse = await fetch(
+        const saveResponse =
+            await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
             {
                 method:"POST",
@@ -386,9 +460,12 @@ form.addEventListener("submit", async (e) => {
         const saveData =
             await saveResponse.json();
 
-        console.log("SAVE RESPONSE:", saveData);
+        console.log(
+            "SAVE RESPONSE:",
+            saveData
+        );
 
-        // HANDLE AIRTABLE ERRORS
+        // HANDLE SAVE ERRORS
         if(!saveResponse.ok){
 
             status.style.color = "red";
@@ -400,23 +477,27 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        /* =========================
+        /* ==========================
            SEND TO FORMSPREE
         ========================== */
 
         try{
 
-            await fetch(FORMSPREE_URL,{
+            await fetch(
+                FORMSPREE_URL,
+                {
+                    method:"POST",
 
-                method:"POST",
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                headers:{
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify(bookingData)
-            });
+                    body: JSON.stringify(
+                        bookingData
+                    )
+                }
+            );
 
         } catch(formError){
 
@@ -426,7 +507,7 @@ form.addEventListener("submit", async (e) => {
             );
         }
 
-        /* =========================
+        /* ==========================
            SUCCESS
         ========================== */
 
@@ -442,7 +523,10 @@ form.addEventListener("submit", async (e) => {
 
     } catch(error){
 
-        console.error("SUBMIT ERROR:", error);
+        console.error(
+            "SUBMIT ERROR:",
+            error
+        );
 
         status.style.color = "red";
 
