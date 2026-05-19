@@ -6,7 +6,6 @@
 <title>Trash Can Booking System</title>
 
 <style>
-
 body{
     margin:0;
     font-family:Arial;
@@ -29,7 +28,6 @@ body{
 
 h1{
     text-align:center;
-    margin-top:0;
 }
 
 input, select, button{
@@ -60,7 +58,6 @@ button:hover{
     font-weight:bold;
     white-space:pre-wrap;
 }
-
 </style>
 </head>
 
@@ -72,25 +69,9 @@ button:hover{
 
 <form id="bookingForm">
 
-<input
-    id="name"
-    placeholder="Name"
-    required
->
-
-<input
-    id="address"
-    placeholder="Address"
-    required
->
-
-<input
-    id="cans"
-    type="number"
-    min="1"
-    placeholder="Number of Cans"
-    required
->
+<input id="name" placeholder="Name" required>
+<input id="address" placeholder="Address" required>
+<input id="cans" type="number" min="1" placeholder="Number of Cans" required>
 
 <select id="date" required>
     <option value="">Select Date</option>
@@ -100,9 +81,7 @@ button:hover{
     <option value="">Select Time</option>
 </select>
 
-<button type="submit">
-    Book Now
-</button>
+<button type="submit">Book Now</button>
 
 </form>
 
@@ -112,426 +91,218 @@ button:hover{
 
 <script>
 
-/* ====================================
+/* =========================
    CONFIG
-==================================== */
+========================= */
 
-// PUT YOUR NEW AIRTABLE TOKEN HERE
 const AIRTABLE_TOKEN = "patC9MjLvk4JCDQ5Q.0c365a1d7382c9f7dea8d4750ed19c18b00484109709ff5cbf8ad31d8c5bb9db";
-
 const BASE_ID = "appiSgF39h6jIasNa";
-
 const TABLE_NAME = "Bookings";
+const FORMSPREE_URL = "https://formspree.io/f/xpqbkvlr";
 
-const FORMSPREE_URL =
-    "https://formspree.io/f/xpqbkvlr";
-
-/* ====================================
+/* =========================
    ELEMENTS
-==================================== */
+========================= */
 
-const form =
-    document.getElementById("bookingForm");
+const form = document.getElementById("bookingForm");
+const status = document.getElementById("status");
 
-const status =
-    document.getElementById("status");
+const nameInput = document.getElementById("name");
+const addressInput = document.getElementById("address");
+const cansInput = document.getElementById("cans");
+const dateSelect = document.getElementById("date");
+const timeSelect = document.getElementById("time");
 
-const nameInput =
-    document.getElementById("name");
-
-const addressInput =
-    document.getElementById("address");
-
-const cansInput =
-    document.getElementById("cans");
-
-const dateSelect =
-    document.getElementById("date");
-
-const timeSelect =
-    document.getElementById("time");
-
-/* ====================================
-   LOAD DATES
-   ALL WEDNESDAYS + THURSDAYS
-   FOR CURRENT YEAR
-==================================== */
+/* =========================
+   SUMMER RANGE DATES
+   June 24 → August 6
+========================= */
 
 function loadDates(){
 
-    const today = new Date();
+    const year = new Date().getFullYear();
 
-    const currentYear =
-        today.getFullYear();
+    const start = new Date(year, 5, 24); // June = 5
+    const end = new Date(year, 7, 6);    // August = 7
 
-    dateSelect.innerHTML =
-        `<option value="">Select Date</option>`;
+    dateSelect.innerHTML = `<option value="">Select Date</option>`;
 
-    // START FROM TODAY
-    let date = new Date(today);
+    let date = new Date(start);
 
-    // LOOP THROUGH CURRENT YEAR
-    while(date.getFullYear() === currentYear){
+    while(date <= end){
 
-        // Wednesday = 3
-        // Thursday = 4
-        if(
-            date.getDay() === 3 ||
-            date.getDay() === 4
-        ){
+        const day = date.getDay();
 
-            let dayName =
-                date.getDay() === 3
-                ? "Wednesday"
-                : "Thursday";
+        // Wednesday = 3, Thursday = 4
+        if(day === 3 || day === 4){
+
+            let dayName = day === 3 ? "Wednesday" : "Thursday";
 
             let formatted =
                 `${dayName} - ${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
 
-            let option =
-                document.createElement("option");
+            let option = document.createElement("option");
 
             option.value = formatted;
-
             option.textContent = formatted;
 
             dateSelect.appendChild(option);
         }
 
-        // NEXT DAY
         date.setDate(date.getDate() + 1);
     }
 }
 
 loadDates();
 
-/* ====================================
-   LOAD AVAILABLE TIMES
-==================================== */
+/* =========================
+   TIMES
+========================= */
 
-dateSelect.addEventListener(
-    "change",
-    async () => {
+dateSelect.addEventListener("change", async () => {
 
-    timeSelect.innerHTML =
-        `<option value="">Loading...</option>`;
+    timeSelect.innerHTML = `<option value="">Loading...</option>`;
 
-    if(!dateSelect.value){
-        return;
+    if(!dateSelect.value) return;
+
+    let allTimes;
+
+    if(dateSelect.value.includes("Thursday")){
+        allTimes = ["8:00 AM","9:00 AM","10:00 AM"];
+    } else {
+        allTimes = ["12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM"];
     }
-
-    // THURSDAY TIMES
-    let allTimes =
-        dateSelect.value.includes("Thursday")
-
-        ? [
-            "10:00 AM",
-            "11:00 AM",
-            "12:00 PM"
-          ]
-
-        // WEDNESDAY TIMES
-        : [
-            "12:00 PM",
-            "1:00 PM",
-            "2:00 PM",
-            "3:00 PM",
-            "4:00 PM"
-          ];
 
     try{
 
-        const response = await fetch(
+        const res = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
             {
                 headers:{
-                    "Authorization":
-                        `Bearer ${AIRTABLE_TOKEN}`
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`
                 }
             }
         );
 
-        const data =
-            await response.json();
+        const data = await res.json();
 
-        console.log(
-            "AIRTABLE RESPONSE:",
-            data
-        );
-
-        // HANDLE AIRTABLE ERRORS
-        if(data.error){
-
-            console.error(data.error);
-
-            timeSelect.innerHTML =
-                `<option value="">Airtable Error</option>`;
-
-            status.style.color = "red";
-
-            status.innerHTML =
-                "❌ Airtable Error:<br>" +
-                JSON.stringify(data.error);
-
-            return;
-        }
-
-        // GET BOOKED SLOT KEYS SAFELY
-        const bookedSlots =
-            (data.records || [])
-
-            .map(record =>
-                record.fields?.SlotKey
-            )
-
+        const bookedSlots = (data.records || [])
+            .map(r => r.fields?.SlotKey)
             .filter(Boolean);
 
-        timeSelect.innerHTML =
-            `<option value="">Select Time</option>`;
+        timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-        // SHOW ONLY AVAILABLE TIMES
         allTimes.forEach(time => {
 
-            const slotKey =
-                `${dateSelect.value}|${time}`;
+            const slotKey = `${dateSelect.value}|${time}`;
 
             if(!bookedSlots.includes(slotKey)){
 
-                let option =
-                    document.createElement("option");
-
-                option.value = time;
-
-                option.textContent = time;
-
-                timeSelect.appendChild(option);
+                let opt = document.createElement("option");
+                opt.value = time;
+                opt.textContent = time;
+                timeSelect.appendChild(opt);
             }
         });
 
-        // NO TIMES LEFT
         if(timeSelect.options.length === 1){
-
-            let option =
-                document.createElement("option");
-
-            option.textContent =
-                "No Times Available";
-
-            option.disabled = true;
-
-            timeSelect.appendChild(option);
+            let opt = document.createElement("option");
+            opt.textContent = "No Times Available";
+            opt.disabled = true;
+            timeSelect.appendChild(opt);
         }
 
-    } catch(error){
-
-        console.error(
-            "TIME LOAD ERROR:",
-            error
-        );
-
-        timeSelect.innerHTML =
-            `<option value="">Error Loading Times</option>`;
-
-        status.style.color = "red";
-
-        status.innerHTML =
-            "❌ Failed loading available times.";
+    } catch(err){
+        console.error(err);
+        timeSelect.innerHTML = `<option value="">Error Loading Times</option>`;
     }
 });
 
-/* ====================================
-   SUBMIT BOOKING
-==================================== */
+/* =========================
+   SUBMIT
+========================= */
 
-form.addEventListener(
-    "submit",
-    async (e) => {
-
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const name =
-        nameInput.value.trim();
+    const name = nameInput.value.trim();
+    const address = addressInput.value.trim();
+    const cans = Number(cansInput.value);
+    const date = dateSelect.value;
+    const time = timeSelect.value;
 
-    const address =
-        addressInput.value.trim();
-
-    const cans =
-        Number(cansInput.value);
-
-    const date =
-        dateSelect.value;
-
-    const time =
-        timeSelect.value;
-
-    // VALIDATION
-    if(
-        !name ||
-        !address ||
-        !cans ||
-        cans <= 0 ||
-        !date ||
-        !time
-    ){
-
+    if(!name || !address || !cans || !date || !time){
         status.style.color = "red";
-
-        status.innerHTML =
-            "❌ Please fill in all fields correctly.";
-
+        status.innerHTML = "Please fill in all fields.";
         return;
     }
 
-    const slotKey =
-        `${date}|${time}`;
+    const slotKey = `${date}|${time}`;
 
     const bookingData = {
-
         Name: name,
-
         Address: address,
-
         Cans: cans,
-
         Date: date,
-
         Time: time,
-
         SlotKey: slotKey
     };
 
     try{
 
-        /* ==========================
-           DOUBLE BOOKING CHECK
-        ========================== */
-
-        const checkResponse =
-            await fetch(
+        const check = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula={SlotKey}="${slotKey}"`,
             {
                 headers:{
-                    "Authorization":
-                        `Bearer ${AIRTABLE_TOKEN}`
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`
                 }
             }
         );
 
-        const checkData =
-            await checkResponse.json();
+        const checkData = await check.json();
 
-        if(
-            checkData.records &&
-            checkData.records.length > 0
-        ){
-
+        if(checkData.records?.length > 0){
             status.style.color = "red";
-
-            status.innerHTML =
-                "❌ This time slot is already booked.";
-
+            status.innerHTML = "Slot already booked.";
             return;
         }
 
-        /* ==========================
-           SAVE TO AIRTABLE
-        ========================== */
-
-        const saveResponse =
-            await fetch(
+        const save = await fetch(
             `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`,
             {
                 method:"POST",
-
                 headers:{
-                    "Authorization":
-                        `Bearer ${AIRTABLE_TOKEN}`,
-
-                    "Content-Type":
-                        "application/json"
+                    "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+                    "Content-Type":"application/json"
                 },
-
-                body: JSON.stringify({
-                    fields: bookingData
-                })
+                body: JSON.stringify({ fields: bookingData })
             }
         );
 
-        const saveData =
-            await saveResponse.json();
+        const saveData = await save.json();
 
-        console.log(
-            "SAVE RESPONSE:",
-            saveData
-        );
-
-        // HANDLE SAVE ERRORS
-        if(!saveResponse.ok){
-
+        if(!save.ok){
             status.style.color = "red";
-
-            status.innerHTML =
-                "❌ Airtable Error:<br>" +
-                JSON.stringify(saveData);
-
+            status.innerHTML = "Airtable Error: " + JSON.stringify(saveData);
             return;
         }
 
-        /* ==========================
-           SEND TO FORMSPREE
-        ========================== */
-
-        try{
-
-            await fetch(
-                FORMSPREE_URL,
-                {
-                    method:"POST",
-
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify(
-                        bookingData
-                    )
-                }
-            );
-
-        } catch(formError){
-
-            console.log(
-                "FORMSPREE ERROR:",
-                formError
-            );
-        }
-
-        /* ==========================
-           SUCCESS
-        ========================== */
+        await fetch(FORMSPREE_URL,{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify(bookingData)
+        });
 
         status.style.color = "green";
-
-        status.innerHTML =
-            "✅ Booking Confirmed!";
+        status.innerHTML = "✅ Booking Confirmed!";
 
         form.reset();
+        timeSelect.innerHTML = `<option value="">Select Time</option>`;
 
-        timeSelect.innerHTML =
-            `<option value="">Select Time</option>`;
-
-    } catch(error){
-
-        console.error(
-            "SUBMIT ERROR:",
-            error
-        );
-
+    } catch(err){
+        console.error(err);
         status.style.color = "red";
-
-        status.innerHTML =
-            "❌ Network Error";
+        status.innerHTML = "Network Error";
     }
 });
 
